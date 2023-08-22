@@ -16,6 +16,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include <boost/math/tools/ieee754_linear.hpp>
+
 #ifdef _MSC_VER
 #pragma warning(disable:4127)
 #endif
@@ -28,6 +30,11 @@
 #endif
 #endif
 
+template <typename T>
+T ffd(T x, T y) {
+   return boost::math::tools::detail::bits_ieee754::calc::bit_dist(x, y);
+}
+
 
 template <class T>
 void test_value(const T& val, const char* name)
@@ -38,28 +45,28 @@ void test_value(const T& val, const char* name)
 
    std::cout << "Testing type " << name << " with initial value " << val << std::endl;
 
-   BOOST_CHECK_EQUAL(float_distance(float_next(val), val), -1);
+   BOOST_CHECK_EQUAL(ffd(float_next(val), val), -1);
    BOOST_CHECK(float_next(val) > val);
-   BOOST_CHECK_EQUAL(float_distance(float_prior(val), val), 1);
+   BOOST_CHECK_EQUAL(ffd(float_prior(val), val), 1);
    BOOST_CHECK(float_prior(val) < val);
-   BOOST_CHECK_EQUAL(float_distance((boost::math::nextafter)(val, upper), val), -1);
+   BOOST_CHECK_EQUAL(ffd((boost::math::nextafter)(val, upper), val), -1);
    BOOST_CHECK((boost::math::nextafter)(val, upper) > val);
-   BOOST_CHECK_EQUAL(float_distance((boost::math::nextafter)(val, lower), val), 1);
+   BOOST_CHECK_EQUAL(ffd((boost::math::nextafter)(val, lower), val), 1);
    BOOST_CHECK((boost::math::nextafter)(val, lower) < val);
-   BOOST_CHECK_EQUAL(float_distance(float_next(float_next(val)), val), -2);
-   BOOST_CHECK_EQUAL(float_distance(float_prior(float_prior(val)), val), 2);
-   BOOST_CHECK_EQUAL(float_distance(float_prior(float_prior(val)), float_next(float_next(val))), 4);
-   BOOST_CHECK_EQUAL(float_distance(float_prior(float_next(val)), val), 0);
-   BOOST_CHECK_EQUAL(float_distance(float_next(float_prior(val)), val), 0);
+   BOOST_CHECK_EQUAL(ffd(float_next(float_next(val)), val), -2);
+   BOOST_CHECK_EQUAL(ffd(float_prior(float_prior(val)), val), 2);
+   BOOST_CHECK_EQUAL(ffd(float_prior(float_prior(val)), float_next(float_next(val))), 4);
+   BOOST_CHECK_EQUAL(ffd(float_prior(float_next(val)), val), 0);
+   BOOST_CHECK_EQUAL(ffd(float_next(float_prior(val)), val), 0);
    BOOST_CHECK_EQUAL(float_prior(float_next(val)), val);
    BOOST_CHECK_EQUAL(float_next(float_prior(val)), val);
 
-   BOOST_CHECK_EQUAL(float_distance(float_advance(val, 4), val), -4);
-   BOOST_CHECK_EQUAL(float_distance(float_advance(val, -4), val), 4);
+   BOOST_CHECK_EQUAL(ffd(float_advance(val, 4), val), -4);
+   BOOST_CHECK_EQUAL(ffd(float_advance(val, -4), val), 4);
    if(std::numeric_limits<T>::is_specialized && (std::numeric_limits<T>::has_denorm == std::denorm_present))
    {
-      BOOST_CHECK_EQUAL(float_distance(float_advance(float_next(float_next(val)), 4), float_next(float_next(val))), -4);
-      BOOST_CHECK_EQUAL(float_distance(float_advance(float_next(float_next(val)), -4), float_next(float_next(val))), 4);
+      BOOST_CHECK_EQUAL(ffd(float_advance(float_next(float_next(val)), 4), float_next(float_next(val))), -4);
+      BOOST_CHECK_EQUAL(ffd(float_advance(float_next(float_next(val)), -4), float_next(float_next(val))), 4);
    }
    if(val > 0)
    {
@@ -166,8 +173,8 @@ void test_values(const T& val, const char* name)
          v1 = boost::math::float_next(v1);
          v2 = boost::math::float_prior(v2);
       }
-      BOOST_CHECK_EQUAL(boost::math::float_distance(v1, val), -primes[i]);
-      BOOST_CHECK_EQUAL(boost::math::float_distance(v2, val), primes[i]);
+      BOOST_CHECK_EQUAL(ffd(v1, val), -primes[i]);
+      BOOST_CHECK_EQUAL(ffd(v2, val), primes[i]);
       BOOST_CHECK_EQUAL(boost::math::float_advance(val, primes[i]), v1);
       BOOST_CHECK_EQUAL(boost::math::float_advance(val, -primes[i]), v2);
    }
@@ -189,7 +196,7 @@ void test_values(const T& val, const char* name)
       }
    }
    //
-   // We need to test float_distance over multiple orders of magnitude,
+   // We need to test ffd over multiple orders of magnitude,
    // the only way to get an accurate true result is to count the representations
    // between the two end points, but we can only really do this for type float:
    //
@@ -200,7 +207,7 @@ void test_values(const T& val, const char* name)
 
       left = static_cast<T>(0.1);
       right = left * static_cast<T>(4.2);
-      dist = boost::math::float_distance(left, right);
+      dist = ffd(left, right);
       // We have to use a wider integer type for the accurate count, since there
       // aren't enough bits in T to get a true result if the values differ
       // by more than a factor of 2:
@@ -211,7 +218,7 @@ void test_values(const T& val, const char* name)
 
       left = static_cast<T>(-0.1);
       right = left * static_cast<T>(4.2);
-      dist = boost::math::float_distance(right, left);
+      dist = ffd(right, left);
       result = 0;
       for (; left != right; ++result, left = boost::math::float_prior(left));
       fresult = static_cast<T>(result);
@@ -219,7 +226,7 @@ void test_values(const T& val, const char* name)
 
       left = static_cast<T>(-1.1) * (std::numeric_limits<T>::min)();
       right = static_cast<T>(-4.1) * left;
-      dist = boost::math::float_distance(left, right);
+      dist = ffd(left, right);
       result = 0;
       for (; left != right; ++result, left = boost::math::float_next(left));
       fresult = static_cast<T>(result);
