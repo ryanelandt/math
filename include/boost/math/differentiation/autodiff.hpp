@@ -2022,6 +2022,11 @@ struct promote_args_2<detail::autodiff_fvar_type<RealType0, Order0>, RealType1> 
   using type = detail::autodiff_fvar_type<typename promote_args_2<RealType0, RealType1>::type, Order0>;
 };
 
+template <typename RealType, size_t Order>
+struct promote_args_2<detail::autodiff_fvar_type<RealType, Order>, void> {
+  using type = detail::autodiff_fvar_type<RealType, Order>;
+};
+
 template <typename RealType0, typename RealType1, size_t Order1>
 struct promote_args_2<RealType0, detail::autodiff_fvar_type<RealType1, Order1>> {
   using type = detail::autodiff_fvar_type<typename promote_args_2<RealType0, RealType1>::type, Order1>;
